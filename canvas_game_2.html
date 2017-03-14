@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>canvas_game_2</title>
+</head>
+<body onload="startGame()" onkeypress="testf(event)">
+
+<p id="demo"></p>
+<script type="text/javascript">
+
+	var bricks=[]; 
+	var player;
+	var paddle;
+
+	var brick_width=60;
+	var brick_height=40;
+
+	function startGame(){
+		
+		// player=new box(myGameArea.canvas.width/2,myGameArea.canvas.height-50,30,30,"green",1);
+		player=new box(450,400,30,30,"green",4);
+		paddle=new box(300,470,300,20,"yellow",0);
+		myGameArea.start();
+		
+		this.arrange=function(){
+			var xoff=0;
+			var yoff=0;
+			for(yoff=0;yoff<myGameArea.canvas.height/3;yoff+=(brick_height+10)){
+				xoff=0;
+				for(xoff=0;xoff<myGameArea.canvas.width;xoff+=brick_width+10){
+					var new_box=new box(xoff,yoff,brick_width,brick_height,"red");
+					
+					bricks.push(new_box);
+				}
+			}
+		}
+		this.arrange();		
+	}
+
+
+	var myGameArea={
+		canvas:document.createElement("canvas"),
+		start:function(){
+			this.canvas.width=900;
+			this.canvas.height=500;
+			document.body.insertBefore(this.canvas,document.body.childNodes[0]);
+			this.context=this.canvas.getContext("2d");
+			this.interval=setInterval(updateGame,20);
+		},
+		clear:function(){
+			this.context.fillStyle="black";
+			this.context.fillRect(0,0,this.canvas.width,this.canvas.height);
+		}
+	}
+
+
+	function box(x,y,width,height,color,speed){
+		this.width=width;
+		this.height=height;
+		this.x=x;
+		this.y=y;
+		this.speed=speed;
+		theta=Math.PI/2+Math.random()*Math.PI;
+		this.speedX=this.speed*Math.sin(theta);
+		this.speedY=this.speed*Math.cos(theta);
+
+		this.show=function(){
+			ctx=myGameArea.context;
+			ctx.fillStyle=color;
+			myGameArea.context.fillRect(this.x,this.y,this.width,this.height);
+		}
+
+		this.update=function(){
+			this.x+=this.speedX;
+			this.y+=this.speedY;
+			if(this.x>(myGameArea.canvas.width-this.width)||this.x<0){
+				this.speedX*=-1;
+			}
+			if(this.y+this.height>myGameArea.canvas.height||this.y<0){
+				this.speedY*=-1;
+			}
+			if(this.y+this.height>paddle.y&&this.x+this.width>paddle.x&&this.x<paddle.x+paddle.width){
+				this.speedY*=-1;
+			}
+			if(this.y+this.height>myGameArea.canvas.height){
+				clearInterval(myGameArea.interval);
+			}
+			
+		}
+
+		this.collision=function(obj){
+			if(this.y<(obj.y+obj.height)&&this.y>obj.y&&this.x>obj.x&&this.x<(obj.x+obj.width)){
+				this.speedY*=-1;
+				return true;	
+			}
+			return false;
+		}
+
+		
+		this.move=function(){
+			
+			
+		}
+	}
+
+	function updateGame(){
+		myGameArea.clear();
+		for (var i = bricks.length - 1; i >= 0; i--) {
+			bricks[i].show();
+			if(player.collision(bricks[i])){
+				bricks.splice(i,1);
+			};
+			
+
+		};
+		player.update();
+		player.show();
+		paddle.move();
+		paddle.show();
+	}
+
+
+	function testf(event){
+		var x = event.which || event.keyCode;
+		if(x==37){
+			paddle.x-=20;
+		}
+		if(x==39){
+			paddle.x+=20;
+		}
+    	document.getElementById("demo").innerHTML = " Unicode 值为: " + x;
+	}
+
+
+
+</script>
+
+
+	
+</body>
+</html>
