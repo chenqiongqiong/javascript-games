@@ -144,7 +144,14 @@
 	//鼠标移动paddle
 	function paddle_move_by_mouse(event){
 		var x =event.clientX;
-		paddle.x=x-paddle.width/2;
+
+		if(x<myGameArea.canvas.width){
+			paddle.x=x-paddle.width/2;	
+		}
+		
+
+		
+
 	}
 
 </script>
