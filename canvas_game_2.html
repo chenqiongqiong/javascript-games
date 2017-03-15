@@ -4,11 +4,12 @@
 	<meta charset="UTF-8">
 	<title>canvas_game_2</title>
 </head>
-<body onload="startGame()" onkeypress="testf(event)">
+<body onload="startGame()" onkeypress="paddle_move(event)" onmousemove="paddle_move_by_mouse(event)">
 
 <p id="demo"></p>
 <script type="text/javascript">
 
+	//定义砖块数组，反弹球，球拍
 	var bricks=[]; 
 	var player;
 	var paddle;
@@ -16,13 +17,15 @@
 	var brick_width=60;
 	var brick_height=40;
 
+	
+	//游戏开始
 	function startGame(){
-		
 		// player=new box(myGameArea.canvas.width/2,myGameArea.canvas.height-50,30,30,"green",1);
 		player=new box(450,400,30,30,"green",4);
 		paddle=new box(300,470,300,20,"yellow",0);
 		myGameArea.start();
 		
+		//排列砖块
 		this.arrange=function(){
 			var xoff=0;
 			var yoff=0;
@@ -30,7 +33,6 @@
 				xoff=0;
 				for(xoff=0;xoff<myGameArea.canvas.width;xoff+=brick_width+10){
 					var new_box=new box(xoff,yoff,brick_width,brick_height,"red");
-					
 					bricks.push(new_box);
 				}
 			}
@@ -38,101 +40,115 @@
 		this.arrange();		
 	}
 
-
+	//定义游戏区域
 	var myGameArea={
-		canvas:document.createElement("canvas"),
-		start:function(){
+		canvas:document.createElement("canvas"),   //代码生产canvas
+		start:function(){                          //游戏准备
 			this.canvas.width=900;
 			this.canvas.height=500;
-			document.body.insertBefore(this.canvas,document.body.childNodes[0]);
+			document.body.insertBefore(this.canvas,document.body.childNodes[0]);    //canvas加入页面
 			this.context=this.canvas.getContext("2d");
 			this.interval=setInterval(updateGame,20);
 		},
-		clear:function(){
+		clear:function(){                         //每一帧要清屏
 			this.context.fillStyle="black";
 			this.context.fillRect(0,0,this.canvas.width,this.canvas.height);
 		}
 	}
 
-
+    //定义方块，用于产生反弹球、砖块、球拍
 	function box(x,y,width,height,color,speed){
 		this.width=width;
 		this.height=height;
 		this.x=x;
 		this.y=y;
-		this.speed=speed;
-		theta=Math.PI/2+Math.random()*Math.PI;
-		this.speedX=this.speed*Math.sin(theta);
-		this.speedY=this.speed*Math.cos(theta);
+		this.speed=speed;                        //移动速度（为反弹球设置）
+		theta=Math.PI/2+Math.random()*Math.PI;   //初始角度（为反弹球设置）
+		this.speedX=this.speed*Math.sin(theta);  //分解水平分量
+		this.speedY=this.speed*Math.cos(theta);  //分解垂直分量
 
+		//在canvas里显示
 		this.show=function(){
 			ctx=myGameArea.context;
 			ctx.fillStyle=color;
 			myGameArea.context.fillRect(this.x,this.y,this.width,this.height);
 		}
 
+
+		//反弹球更新位置
 		this.update=function(){
 			this.x+=this.speedX;
 			this.y+=this.speedY;
+
+			//检测碰到两边墙壁
 			if(this.x>(myGameArea.canvas.width-this.width)||this.x<0){
 				this.speedX*=-1;
 			}
-			if(this.y+this.height>myGameArea.canvas.height||this.y<0){
+
+			//检测碰到上面墙壁
+			if(this.y<0){
 				this.speedY*=-1;
 			}
-			if(this.y+this.height>paddle.y&&this.x+this.width>paddle.x&&this.x<paddle.x+paddle.width){
+
+			//检测碰到球拍
+			if(this.y+this.height>paddle.y&&this.x>(paddle.x-this.width)&&this.x<(paddle.x+paddle.width)){
 				this.speedY*=-1;
 			}
+
+			//检测碰到下面墙壁，游戏停止
 			if(this.y+this.height>myGameArea.canvas.height){
 				clearInterval(myGameArea.interval);
 			}
 			
 		}
 
+
+		//检测球与砖块的碰撞
 		this.collision=function(obj){
-			if(this.y<(obj.y+obj.height)&&this.y>obj.y&&this.x>obj.x&&this.x<(obj.x+obj.width)){
+			if(this.y<(obj.y+obj.height)&&this.y>(obj.y-this.height)&&this.x>(obj.x-this.width)&&this.x<(obj.x+obj.width)){
 				this.speedY*=-1;
 				return true;	
 			}
 			return false;
 		}
-
-		
-		this.move=function(){
-			
-			
-		}
 	}
 
+	
+	//游戏更新
 	function updateGame(){
-		myGameArea.clear();
+		myGameArea.clear();            //清屏
 		for (var i = bricks.length - 1; i >= 0; i--) {
 			bricks[i].show();
 			if(player.collision(bricks[i])){
-				bricks.splice(i,1);
+				bricks.splice(i,1);    //如果该砖块碰到反弹球，就从数组中删掉
 			};
-			
-
 		};
-		player.update();
-		player.show();
-		paddle.move();
-		paddle.show();
+		player.update();  // 反弹球更新位置                            
+		player.show();    //反弹球显示
+		// paddle.move();
+		paddle.show();    // 每一帧球拍要显示
 	}
 
-
-	function testf(event){
+	//键盘移动paddle
+	function paddle_move(event){
 		var x = event.which || event.keyCode;
-		if(x==37){
-			paddle.x-=20;
-		}
-		if(x==39){
-			paddle.x+=20;
-		}
-    	document.getElementById("demo").innerHTML = " Unicode 值为: " + x;
+			if(x==37){
+				paddle.x-=20;
+			}
+			if(x==39){
+				paddle.x+=20;
+			}
+    	// document.getElementById("demo").innerHTML = " Unicode 值为: " + x;
 	}
 
-
+	//鼠标移动paddle
+	function paddle_move_by_mouse(event){
+		var x =event.clientX;
+		if(x<myGameArea.canvas.width){
+			paddle.x=x-paddle.width/2;	
+		}
+		
+	}
 
 </script>
 
